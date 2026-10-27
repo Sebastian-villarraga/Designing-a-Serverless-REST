@@ -1,0 +1,591 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Transform": "AWS::Serverless-2016-10-31",
+  "Description": "Orders workshop - custom and proxy REST APIs",
+  "Resources": {
+    "ProxyFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "CodeUri": "../target/orders-api.jar",
+        "Handler": "edu.eci.orders.lambda.ProxyHandler::handleRequest",
+        "Runtime": "java17",
+        "MemorySize": 512,
+        "Timeout": 15,
+        "Policies": [
+          "AWSLambdaBasicExecutionRole"
+        ]
+      }
+    },
+    "CustomFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "CodeUri": "../target/orders-api.jar",
+        "Handler": "edu.eci.orders.lambda.CustomHandler::handleRequest",
+        "Runtime": "java17",
+        "MemorySize": 512,
+        "Timeout": 15,
+        "Policies": [
+          "AWSLambdaBasicExecutionRole"
+        ]
+      }
+    },
+    "DirectFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "CodeUri": "../target/orders-api.jar",
+        "Handler": "edu.eci.orders.lambda.CreateOrderHandler::handleRequest",
+        "Runtime": "java17",
+        "MemorySize": 512,
+        "Timeout": 15,
+        "Policies": [
+          "AWSLambdaBasicExecutionRole"
+        ]
+      }
+    },
+    "ProxyApi": {
+      "Type": "AWS::Serverless::Api",
+      "Properties": {
+        "StageName": "dev",
+        "DefinitionBody": {
+          "openapi": "3.0.1",
+          "info": {
+            "title": "Orders Proxy",
+            "version": "1.0"
+          },
+          "paths": {
+            "/orders": {
+              "get": {
+                "responses": {
+                  "200": {
+                    "description": "OK"
+                  },
+                  "201": {
+                    "description": "Created"
+                  },
+                  "204": {
+                    "description": "No content"
+                  },
+                  "400": {
+                    "description": "Invalid input"
+                  },
+                  "404": {
+                    "description": "Not found"
+                  },
+                  "500": {
+                    "description": "Internal error"
+                  }
+                },
+                "x-amazon-apigateway-integration": {
+                  "type": "aws_proxy",
+                  "httpMethod": "POST",
+                  "uri": {
+                    "Fn::Sub": "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ProxyFunction.Arn}/invocations"
+                  }
+                },
+                "parameters": [
+                  {
+                    "name": "customerId",
+                    "in": "query",
+                    "schema": {
+                      "type": "string"
+                    }
+                  }
+                ]
+              },
+              "post": {
+                "responses": {
+                  "200": {
+                    "description": "OK"
+                  },
+                  "201": {
+                    "description": "Created"
+                  },
+                  "204": {
+                    "description": "No content"
+                  },
+                  "400": {
+                    "description": "Invalid input"
+                  },
+                  "404": {
+                    "description": "Not found"
+                  },
+                  "500": {
+                    "description": "Internal error"
+                  }
+                },
+                "x-amazon-apigateway-integration": {
+                  "type": "aws_proxy",
+                  "httpMethod": "POST",
+                  "uri": {
+                    "Fn::Sub": "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ProxyFunction.Arn}/invocations"
+                  }
+                }
+              }
+            },
+            "/orders/{id}": {
+              "get": {
+                "responses": {
+                  "200": {
+                    "description": "OK"
+                  },
+                  "201": {
+                    "description": "Created"
+                  },
+                  "204": {
+                    "description": "No content"
+                  },
+                  "400": {
+                    "description": "Invalid input"
+                  },
+                  "404": {
+                    "description": "Not found"
+                  },
+                  "500": {
+                    "description": "Internal error"
+                  }
+                },
+                "x-amazon-apigateway-integration": {
+                  "type": "aws_proxy",
+                  "httpMethod": "POST",
+                  "uri": {
+                    "Fn::Sub": "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ProxyFunction.Arn}/invocations"
+                  }
+                },
+                "parameters": [
+                  {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                      "type": "string"
+                    }
+                  }
+                ]
+              },
+              "delete": {
+                "responses": {
+                  "200": {
+                    "description": "OK"
+                  },
+                  "201": {
+                    "description": "Created"
+                  },
+                  "204": {
+                    "description": "No content"
+                  },
+                  "400": {
+                    "description": "Invalid input"
+                  },
+                  "404": {
+                    "description": "Not found"
+                  },
+                  "500": {
+                    "description": "Internal error"
+                  }
+                },
+                "x-amazon-apigateway-integration": {
+                  "type": "aws_proxy",
+                  "httpMethod": "POST",
+                  "uri": {
+                    "Fn::Sub": "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ProxyFunction.Arn}/invocations"
+                  }
+                },
+                "parameters": [
+                  {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                      "type": "string"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "x-amazon-apigateway-gateway-responses": {
+            "DEFAULT_4XX": {
+              "responseTemplates": {
+                "application/json": "{\"error\":\"INVALID_REQUEST\",\"message\":\"Request rejected by API Gateway\"}"
+              }
+            },
+            "DEFAULT_5XX": {
+              "responseTemplates": {
+                "application/json": "{\"error\":\"INTERNAL_ERROR\",\"message\":\"Unexpected infrastructure error\"}"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ProxyPermission": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Ref": "ProxyFunction"
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Sub": "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ProxyApi}/*/*/*"
+        }
+      }
+    },
+    "CustomApi": {
+      "Type": "AWS::Serverless::Api",
+      "Properties": {
+        "StageName": "dev",
+        "DefinitionBody": {
+          "openapi": "3.0.1",
+          "info": {
+            "title": "Orders Custom",
+            "version": "1.0"
+          },
+          "paths": {
+            "/orders": {
+              "get": {
+                "responses": {
+                  "200": {
+                    "description": "OK"
+                  },
+                  "201": {
+                    "description": "Created",
+                    "headers": {
+                      "Location": {
+                        "schema": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "204": {
+                    "description": "No content"
+                  },
+                  "400": {
+                    "description": "Invalid input"
+                  },
+                  "404": {
+                    "description": "Not found"
+                  },
+                  "500": {
+                    "description": "Internal error"
+                  }
+                },
+                "x-amazon-apigateway-integration": {
+                  "type": "aws",
+                  "httpMethod": "POST",
+                  "uri": {
+                    "Fn::Sub": "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CustomFunction.Arn}/invocations"
+                  },
+                  "passthroughBehavior": "never",
+                  "requestTemplates": {
+                    "application/json": "{\"operation\":\"SEARCH\",\"customerId\":\"$util.escapeJavaScript($input.params().querystring.get('customerId')).replaceAll(\"\\\\'\",\"'\")\"}"
+                  },
+                  "responses": {
+                    "default": {
+                      "statusCode": "200",
+                      "responseTemplates": {
+                        "application/json": "#set($r = $input.path('$'))\n#set($codes = {\"OK\":200,\"CREATED\":201,\"DELETED\":204,\"INVALID\":400,\"NOT_FOUND\":404,\"ERROR\":500})\n#set($context.responseOverride.status = $codes.get($r.outcome))\n#if($r.outcome == \"CREATED\")\n#set($context.responseOverride.header.Location = \"/orders/$r.data.id\")\n#end\n#if($r.outcome != \"DELETED\")\n$input.json('$.data')\n#end"
+                      }
+                    },
+                    "(?s).*": {
+                      "statusCode": "500",
+                      "responseTemplates": {
+                        "application/json": "{\"error\":\"INTERNAL_ERROR\",\"message\":\"Unexpected internal error\"}"
+                      }
+                    }
+                  }
+                },
+                "parameters": [
+                  {
+                    "name": "customerId",
+                    "in": "query",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  }
+                ],
+                "x-amazon-apigateway-request-validator": "parameters"
+              },
+              "post": {
+                "responses": {
+                  "200": {
+                    "description": "OK"
+                  },
+                  "201": {
+                    "description": "Created",
+                    "headers": {
+                      "Location": {
+                        "schema": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "204": {
+                    "description": "No content"
+                  },
+                  "400": {
+                    "description": "Invalid input"
+                  },
+                  "404": {
+                    "description": "Not found"
+                  },
+                  "500": {
+                    "description": "Internal error"
+                  }
+                },
+                "x-amazon-apigateway-integration": {
+                  "type": "aws",
+                  "httpMethod": "POST",
+                  "uri": {
+                    "Fn::Sub": "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CustomFunction.Arn}/invocations"
+                  },
+                  "passthroughBehavior": "never",
+                  "requestTemplates": {
+                    "application/json": "{\"operation\":\"CREATE\",\"order\":$input.json('$')}"
+                  },
+                  "responses": {
+                    "default": {
+                      "statusCode": "200",
+                      "responseTemplates": {
+                        "application/json": "#set($r = $input.path('$'))\n#set($codes = {\"OK\":200,\"CREATED\":201,\"DELETED\":204,\"INVALID\":400,\"NOT_FOUND\":404,\"ERROR\":500})\n#set($context.responseOverride.status = $codes.get($r.outcome))\n#if($r.outcome == \"CREATED\")\n#set($context.responseOverride.header.Location = \"/orders/$r.data.id\")\n#end\n#if($r.outcome != \"DELETED\")\n$input.json('$.data')\n#end"
+                      }
+                    },
+                    "(?s).*": {
+                      "statusCode": "500",
+                      "responseTemplates": {
+                        "application/json": "{\"error\":\"INTERNAL_ERROR\",\"message\":\"Unexpected internal error\"}"
+                      }
+                    }
+                  }
+                },
+                "x-amazon-apigateway-request-validator": "body",
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/CreateOrder"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/orders/{id}": {
+              "get": {
+                "responses": {
+                  "200": {
+                    "description": "OK"
+                  },
+                  "201": {
+                    "description": "Created",
+                    "headers": {
+                      "Location": {
+                        "schema": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "204": {
+                    "description": "No content"
+                  },
+                  "400": {
+                    "description": "Invalid input"
+                  },
+                  "404": {
+                    "description": "Not found"
+                  },
+                  "500": {
+                    "description": "Internal error"
+                  }
+                },
+                "x-amazon-apigateway-integration": {
+                  "type": "aws",
+                  "httpMethod": "POST",
+                  "uri": {
+                    "Fn::Sub": "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CustomFunction.Arn}/invocations"
+                  },
+                  "passthroughBehavior": "never",
+                  "requestTemplates": {
+                    "application/json": "{\"operation\":\"GET\",\"id\":\"$util.escapeJavaScript($input.params().path.get('id')).replaceAll(\"\\\\'\",\"'\")\"}"
+                  },
+                  "responses": {
+                    "default": {
+                      "statusCode": "200",
+                      "responseTemplates": {
+                        "application/json": "#set($r = $input.path('$'))\n#set($codes = {\"OK\":200,\"CREATED\":201,\"DELETED\":204,\"INVALID\":400,\"NOT_FOUND\":404,\"ERROR\":500})\n#set($context.responseOverride.status = $codes.get($r.outcome))\n#if($r.outcome == \"CREATED\")\n#set($context.responseOverride.header.Location = \"/orders/$r.data.id\")\n#end\n#if($r.outcome != \"DELETED\")\n$input.json('$.data')\n#end"
+                      }
+                    },
+                    "(?s).*": {
+                      "statusCode": "500",
+                      "responseTemplates": {
+                        "application/json": "{\"error\":\"INTERNAL_ERROR\",\"message\":\"Unexpected internal error\"}"
+                      }
+                    }
+                  }
+                },
+                "parameters": [
+                  {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                      "type": "string"
+                    }
+                  }
+                ]
+              },
+              "delete": {
+                "responses": {
+                  "200": {
+                    "description": "OK"
+                  },
+                  "201": {
+                    "description": "Created",
+                    "headers": {
+                      "Location": {
+                        "schema": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "204": {
+                    "description": "No content"
+                  },
+                  "400": {
+                    "description": "Invalid input"
+                  },
+                  "404": {
+                    "description": "Not found"
+                  },
+                  "500": {
+                    "description": "Internal error"
+                  }
+                },
+                "x-amazon-apigateway-integration": {
+                  "type": "aws",
+                  "httpMethod": "POST",
+                  "uri": {
+                    "Fn::Sub": "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CustomFunction.Arn}/invocations"
+                  },
+                  "passthroughBehavior": "never",
+                  "requestTemplates": {
+                    "application/json": "{\"operation\":\"DELETE\",\"id\":\"$util.escapeJavaScript($input.params().path.get('id')).replaceAll(\"\\\\'\",\"'\")\"}"
+                  },
+                  "responses": {
+                    "default": {
+                      "statusCode": "200",
+                      "responseTemplates": {
+                        "application/json": "#set($r = $input.path('$'))\n#set($codes = {\"OK\":200,\"CREATED\":201,\"DELETED\":204,\"INVALID\":400,\"NOT_FOUND\":404,\"ERROR\":500})\n#set($context.responseOverride.status = $codes.get($r.outcome))\n#if($r.outcome == \"CREATED\")\n#set($context.responseOverride.header.Location = \"/orders/$r.data.id\")\n#end\n#if($r.outcome != \"DELETED\")\n$input.json('$.data')\n#end"
+                      }
+                    },
+                    "(?s).*": {
+                      "statusCode": "500",
+                      "responseTemplates": {
+                        "application/json": "{\"error\":\"INTERNAL_ERROR\",\"message\":\"Unexpected internal error\"}"
+                      }
+                    }
+                  }
+                },
+                "parameters": [
+                  {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                      "type": "string"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "x-amazon-apigateway-gateway-responses": {
+            "DEFAULT_4XX": {
+              "responseTemplates": {
+                "application/json": "{\"error\":\"INVALID_REQUEST\",\"message\":\"Request rejected by API Gateway\"}"
+              }
+            },
+            "DEFAULT_5XX": {
+              "responseTemplates": {
+                "application/json": "{\"error\":\"INTERNAL_ERROR\",\"message\":\"Unexpected infrastructure error\"}"
+              }
+            }
+          },
+          "x-amazon-apigateway-request-validators": {
+            "body": {
+              "validateRequestBody": true,
+              "validateRequestParameters": false
+            },
+            "parameters": {
+              "validateRequestBody": false,
+              "validateRequestParameters": true
+            }
+          },
+          "components": {
+            "schemas": {
+              "CreateOrder": {
+                "type": "object",
+                "required": [
+                  "customerId",
+                  "product",
+                  "quantity"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "customerId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "product": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "quantity": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "CustomPermission": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Ref": "CustomFunction"
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Sub": "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${CustomApi}/*/*/*"
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "ProxyUrl": {
+      "Value": {
+        "Fn::Sub": "https://${ProxyApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/dev"
+      }
+    },
+    "CustomUrl": {
+      "Value": {
+        "Fn::Sub": "https://${CustomApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/dev"
+      }
+    },
+    "DirectFunctionName": {
+      "Value": {
+        "Ref": "DirectFunction"
+      }
+    }
+  }
+}

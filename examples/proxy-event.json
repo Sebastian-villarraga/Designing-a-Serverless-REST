@@ -1,0 +1,17 @@
+{
+  "resource": "/orders/{id}",
+  "path": "/orders/ORD-42",
+  "httpMethod": "GET",
+  "headers": {
+    "Accept": "application/json"
+  },
+  "pathParameters": {
+    "id": "ORD-42"
+  },
+  "queryStringParameters": null,
+  "body": null,
+  "isBase64Encoded": false,
+  "requestContext": {
+    "stage": "dev"
+  }
+}
