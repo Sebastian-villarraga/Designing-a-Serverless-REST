@@ -145,6 +145,64 @@ curl.exe -i -X POST "$BASE/orders" -H "Content-Type: application/json" --data '{
 curl.exe -i -X DELETE "$BASE/orders/ORD-42"
 ```
 
+## Evidencias de ejecución
+
+Las siguientes capturas documentan la ejecución del taller del 27 de octubre de 2026, en el orden del flujo de trabajo: pruebas locales, empaquetado, despliegue y verificación en AWS.
+
+### 1. Pruebas unitarias
+
+`mvn test` finaliza con `BUILD SUCCESS`: se ejecutan 11 pruebas, sin fallos, errores ni pruebas omitidas.
+
+![Resultado de las 11 pruebas unitarias con Maven](docs/images/01-maven-tests.jpeg)
+
+### 2. Empaquetado de la aplicación
+
+`mvn package` termina con `BUILD SUCCESS` y reemplaza el artefacto original por el JAR sombreado que incluye las dependencias. Las advertencias de archivos duplicados no impidieron generar el paquete.
+
+![Empaquetado exitoso del JAR con Maven Shade](docs/images/02-maven-package.jpeg)
+
+### 3. Verificación del artefacto
+
+`Get-Item` confirma que existe `target/orders-api.jar`, con un tamaño de 3.420.335 bytes, listo para el despliegue de las funciones Lambda.
+
+![Existencia y tamaño de orders-api.jar](docs/images/03-jar-generado.jpeg)
+
+### 4. Stack y salidas de CloudFormation
+
+El stack `orders-workshop` aparece en estado `UPDATE_COMPLETE`. Sus salidas muestran `CustomUrl`, `ProxyUrl` y `DirectFunctionName`, utilizados para las pruebas HTTP y la invocación directa.
+
+![Stack actualizado y salidas de CloudFormation](docs/images/04-cloudformation-outputs.jpeg)
+
+### 5. Funciones Lambda desplegadas
+
+La consola de AWS muestra las tres funciones del stack: `CustomFunction`, `DirectFunction` y `ProxyFunction`. Todas utilizan el runtime Java 17 y un paquete de tipo ZIP.
+
+![Tres funciones Lambda desplegadas con Java 17](docs/images/05-lambda-functions.jpeg)
+
+### 6. Primera invocación directa
+
+Se invoca `DirectFunction` mediante AWS CLI con `examples/create.json` y se guarda la respuesta en `target/direct-first.json`. La invocación devuelve `StatusCode: 200`, confirmando que la llamada a Lambda se completó; este estado corresponde a la invocación y no a una respuesta HTTP de API Gateway.
+
+![Primera invocación directa de Lambda mediante AWS CLI](docs/images/06-direct-first.jpeg)
+
+### 7. Segunda invocación y resultados serializados
+
+Se realiza otra invocación con `examples/create-second.json`. Al consultar ambos archivos de salida se observan pedidos con identificadores distintos, conservando los datos enviados: un MacBook Air para `CUST-42` y dos monitores para `CUST-100`.
+
+![Segunda invocación directa y JSON de ambos pedidos](docs/images/07-direct-results.jpeg)
+
+### 8. Pruebas HTTP de la API proxy
+
+El script `smoke.ps1` contra la API proxy obtiene 201 al crear, 200 en las consultas, 404 para un pedido inexistente, 400 ante una entrada inválida y 204 al eliminar. La validación de la entrada inválida devuelve `INVALID_INPUT` desde la aplicación.
+
+![Smoke test completo de la API proxy](docs/images/08-smoke-proxy.jpeg)
+
+### 9. Pruebas HTTP de la API custom
+
+El mismo script contra la API custom verifica los códigos 201, 200, 404, 400 y 204. El mapping transforma correctamente los resultados de Lambda en respuestas HTTP; el POST inválido es rechazado por API Gateway con `INVALID_REQUEST`. La captura confirma que la creación ya devuelve 201 y que la eliminación devuelve 204 sin cuerpo.
+
+![Smoke test completo de la API custom](docs/images/09-smoke-custom.jpeg)
+
 ## Cobertura HTTP
 
 El script `scripts/smoke.ps1` comprueba 201, Location, 200, dos busquedas, 404, 400 y 204 vacio. Un GET posterior a DELETE en AWS puede atenderlo otro entorno; las pruebas locales verifican esa secuencia sobre un servicio compartido.
