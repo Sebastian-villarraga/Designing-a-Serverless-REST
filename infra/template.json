@@ -11,9 +11,7 @@
         "Runtime": "java17",
         "MemorySize": 512,
         "Timeout": 15,
-        "Policies": [
-          "AWSLambdaBasicExecutionRole"
-        ]
+        "Role": "arn:aws:iam::921393854793:role/LabRole"
       }
     },
     "CustomFunction": {
@@ -24,9 +22,7 @@
         "Runtime": "java17",
         "MemorySize": 512,
         "Timeout": 15,
-        "Policies": [
-          "AWSLambdaBasicExecutionRole"
-        ]
+        "Role": "arn:aws:iam::921393854793:role/LabRole"
       }
     },
     "DirectFunction": {
@@ -37,9 +33,7 @@
         "Runtime": "java17",
         "MemorySize": 512,
         "Timeout": 15,
-        "Policies": [
-          "AWSLambdaBasicExecutionRole"
-        ]
+        "Role": "arn:aws:iam::921393854793:role/LabRole"
       }
     },
     "ProxyApi": {
@@ -288,7 +282,7 @@
                         "application/json": "#set($r = $input.path('$'))\n#set($codes = {\"OK\":200,\"CREATED\":201,\"DELETED\":204,\"INVALID\":400,\"NOT_FOUND\":404,\"ERROR\":500})\n#set($context.responseOverride.status = $codes.get($r.outcome))\n#if($r.outcome == \"CREATED\")\n#set($context.responseOverride.header.Location = \"/orders/$r.data.id\")\n#end\n#if($r.outcome != \"DELETED\")\n$input.json('$.data')\n#end"
                       }
                     },
-                    "(?s).*": {
+                    "(?s).+": {
                       "statusCode": "500",
                       "responseTemplates": {
                         "application/json": "{\"error\":\"INTERNAL_ERROR\",\"message\":\"Unexpected internal error\"}"
@@ -353,7 +347,7 @@
                         "application/json": "#set($r = $input.path('$'))\n#set($codes = {\"OK\":200,\"CREATED\":201,\"DELETED\":204,\"INVALID\":400,\"NOT_FOUND\":404,\"ERROR\":500})\n#set($context.responseOverride.status = $codes.get($r.outcome))\n#if($r.outcome == \"CREATED\")\n#set($context.responseOverride.header.Location = \"/orders/$r.data.id\")\n#end\n#if($r.outcome != \"DELETED\")\n$input.json('$.data')\n#end"
                       }
                     },
-                    "(?s).*": {
+                    "(?s).+": {
                       "statusCode": "500",
                       "responseTemplates": {
                         "application/json": "{\"error\":\"INTERNAL_ERROR\",\"message\":\"Unexpected internal error\"}"
@@ -420,7 +414,7 @@
                         "application/json": "#set($r = $input.path('$'))\n#set($codes = {\"OK\":200,\"CREATED\":201,\"DELETED\":204,\"INVALID\":400,\"NOT_FOUND\":404,\"ERROR\":500})\n#set($context.responseOverride.status = $codes.get($r.outcome))\n#if($r.outcome == \"CREATED\")\n#set($context.responseOverride.header.Location = \"/orders/$r.data.id\")\n#end\n#if($r.outcome != \"DELETED\")\n$input.json('$.data')\n#end"
                       }
                     },
-                    "(?s).*": {
+                    "(?s).+": {
                       "statusCode": "500",
                       "responseTemplates": {
                         "application/json": "{\"error\":\"INTERNAL_ERROR\",\"message\":\"Unexpected internal error\"}"
@@ -484,7 +478,7 @@
                         "application/json": "#set($r = $input.path('$'))\n#set($codes = {\"OK\":200,\"CREATED\":201,\"DELETED\":204,\"INVALID\":400,\"NOT_FOUND\":404,\"ERROR\":500})\n#set($context.responseOverride.status = $codes.get($r.outcome))\n#if($r.outcome == \"CREATED\")\n#set($context.responseOverride.header.Location = \"/orders/$r.data.id\")\n#end\n#if($r.outcome != \"DELETED\")\n$input.json('$.data')\n#end"
                       }
                     },
-                    "(?s).*": {
+                    "(?s).+": {
                       "statusCode": "500",
                       "responseTemplates": {
                         "application/json": "{\"error\":\"INTERNAL_ERROR\",\"message\":\"Unexpected internal error\"}"
